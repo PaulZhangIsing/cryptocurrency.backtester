@@ -154,6 +154,7 @@ class Gemini:
             max_drawdown(perf['base_equity'][:i].pct_change())
             for i in range(0, len(perf['base_equity']))]
 
+
         # STRATEGY
         perf['algorithm_period_return'] = [
             helpers.percent_change(perf['equity'][0],
@@ -170,9 +171,12 @@ class Gemini:
             'Performance prepared for {:.2} sec'.format(time.time() - start))
 
         perf['ending_value'] = 0  # value of opened positions
+        perf['Annualized Return'] = (1 + perf['algorithm_period_return']).cumprod()[-1]**(len(perf['base_equity'])/365) - 1
         perf['alpha'] = '0'
         perf['beta'] = '0'
-        perf['sharpe'] = '0'
+        perf['std'] = np.std(perf['returns'])
+        perf['sharpe'] = perf['Annualized Return']/perf['std']
+        perf['calmer'] = perf['Annualized Return']/perf['max_drawdown']
 
         return perf
 
@@ -204,6 +208,13 @@ class Gemini:
         # BENCHMARK
         percent_change = helpers.percent_change(self.data['base_equity'][0],
                                                 self.data['base_equity'][-1])
+        percent_changes = [helpers.percent_change(self.data['base_equity'][0],
+                                                self.data['base_equity'][i]) for i in range(1, len(self.data))]
+
+        annualized_return = (1 + percent_change).cumprod()[-1] ** (len(self.data) / 365) - 1
+        std = np.std(percent_changes)
+        sharpe = annualized_return / std
+        calmer = annualized_return / abs(max_drawdown(self.data['equity'].pct_change()))
 
         bench = [
             ("Capital", self.account.initial_capital, ""),
@@ -213,6 +224,7 @@ class Gemini:
              " ({:+.2f}%)".format(percent_change * 100)),
             ("Max Drawdown",
              max_drawdown(self.data['base_equity'].pct_change()) * 100, "%"),
+            ("Sharpe Ratio",sharpe ,""),("Calmer Ratio", calmer,"" )
         ]
 
         print(title_fmt.format(" Benchmark "))
@@ -222,7 +234,13 @@ class Gemini:
         # STRATEGY
         percent_change = helpers.percent_change(self.data['equity'][0],
                                                 self.data['equity'][-1])
+        percent_changes = [helpers.percent_change(self.data['equity'][0],
+                                                 self.data['equity'][i]) for i in range(1, len(self.data))]
         fee = sum([t.fee for t in self.account.closed_trades])
+        annualized_return = (1 + percent_change).cumprod()[-1] ** (len(self.data) / 365) - 1
+        std = np.std(percent_changes)
+        sharpe = annualized_return/ std
+        calmer = annualized_return / abs(max_drawdown(self.data['equity'].pct_change()))
 
         strategy = [
             ("Capital", self.account.initial_capital, ""),
@@ -233,7 +251,8 @@ class Gemini:
             ("Max Drawdown",
              max_drawdown(self.data['equity'].pct_change()) * 100, "%"),
             ("Fees paid", fee, ""),
-        ]
+            ('Sharpe Ratio',sharpe,""),
+            ("calmer ratio",calmer ,"")]
 
         # STATISTICS
         longs = len(
@@ -316,3 +335,4 @@ class Gemini:
 
     def analyze(self):
         pass
+
