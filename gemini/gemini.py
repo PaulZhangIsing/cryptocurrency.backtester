@@ -224,6 +224,7 @@ class Gemini:
              " ({:+.2f}%)".format(percent_change * 100)),
             ("Max Drawdown",
              max_drawdown(self.data['base_equity'].pct_change()) * 100, "%"),
+            ("Annualized Return",annualized_return,""),
             ("Sharpe Ratio",sharpe ,""),("Calmer Ratio", calmer,"" )
         ]
 
@@ -251,6 +252,7 @@ class Gemini:
             ("Max Drawdown",
              max_drawdown(self.data['equity'].pct_change()) * 100, "%"),
             ("Fees paid", fee, ""),
+            ("Annualized Return", annualized_return, ""),
             ('Sharpe Ratio',sharpe,""),
             ("calmer ratio",calmer ,"")]
 
